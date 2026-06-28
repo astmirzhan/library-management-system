@@ -1,10 +1,114 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Dashboard · Library</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-$END$
+<section id="appView">
+    <aside class="sidebar">
+        <div class="brand"><span class="brand-mark">⌁</span> Library</div>
+        <nav class="nav">
+            <a th:href="@{/admin/dashboard}" class="active">📊 Dashboard</a>
+            <a th:href="@{/admin/users}">👥 User management</a>
+            <a th:href="@{/librarian/books}">📖 Inventory</a>
+            <a th:href="@{/librarian/borrows}">📋 All borrows</a>
+            <a th:href="@{/catalog}">🔍 View catalog</a>
+        </nav>
+        <div class="user-chip">
+            <div class="user-row">
+                <div class="avatar"
+                     th:text="${#strings.toUpperCase(#strings.substring(user.username, 0, 2))}">A
+                </div>
+                <div class="user-meta">
+                    <strong th:text="${user.username}">User</strong>
+                    <small>Admin account</small>
+                </div>
+                <a th:href="@{/logout}" class="logout" title="Sign out">↪</a>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <div class="top-actions">
+                <div class="page-title">
+                    <h1>Admin dashboard</h1>
+                    <p>System overview and statistics.</p>
+                </div>
+            </div>
+            <div class="top-actions">
+                <a th:href="@{/admin/users}" class="btn">Manage users</a>
+            </div>
+        </header>
+
+        <!-- Banner -->
+        <div class="admin-banner panel">
+            <div>
+                <h2>System health</h2>
+                <p>Monitor all aspects of the library system.</p>
+            </div>
+            <a th:href="@{/admin/users}" class="btn">Open user manager</a>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="panel stat">
+                <span>Users</span>
+                <strong th:text="${userCount}">0</strong>
+                <small>Total registered</small>
+            </div>
+            <div class="panel stat">
+                <span>Books</span>
+                <strong th:text="${bookCount}">0</strong>
+                <small>Titles in catalog</small>
+            </div>
+            <div class="panel stat">
+                <span>Pending</span>
+                <strong th:text="${pendingCount}">0</strong>
+                <small>Borrow requests</small>
+            </div>
+            <div class="panel stat">
+                <span>Overdue</span>
+                <strong th:text="${overdueCount}">0</strong>
+                <small style="color: var(--danger);">Require action</small>
+            </div>
+        </div>
+
+        <!-- Quick actions -->
+        <div class="section-head">
+            <div>
+                <h2>Quick actions</h2>
+                <p>Manage library operations.</p>
+            </div>
+        </div>
+
+        <div class="split-grid">
+            <a th:href="@{/admin/users}" class="panel"
+               style="padding: 24px; text-decoration: none; color: var(--ink); display: block;">
+                <span class="eyebrow" style="color: var(--brand);">User management</span>
+                <h3 style="margin: 8px 0;">Manage users</h3>
+                <p style="color: var(--muted); margin: 0;">Add, edit, or delete user accounts.</p>
+            </a>
+            <a th:href="@{/librarian/books}" class="panel"
+               style="padding: 24px; text-decoration: none; color: var(--ink); display: block;">
+                <span class="eyebrow" style="color: var(--brand);">Inventory</span>
+                <h3 style="margin: 8px 0;">Manage books</h3>
+                <p style="color: var(--muted); margin: 0;">Add, edit, or remove books from catalog.</p>
+            </a>
+            <a th:href="@{/librarian/borrows}" class="panel"
+               style="padding: 24px; text-decoration: none; color: var(--ink); display: block;">
+                <span class="eyebrow" style="color: var(--brand);">Borrowing</span>
+                <h3 style="margin: 8px 0;">All borrow records</h3>
+                <p style="color: var(--muted); margin: 0;">View all loans across the library.</p>
+            </a>
+        </div>
+    </main>
+</section>
 </body>
 </html>
