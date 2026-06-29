@@ -6,6 +6,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import com.library.util.ConfigLoader;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
@@ -63,6 +64,17 @@ public class WebConfig implements WebMvcConfigurer {
         engine.setTemplateResolver(templateResolver());
         engine.setEnableSpringELCompiler(true);
         return engine;
+    }
+
+    /**
+     * Exposes the ConfigLoader Singleton as a Spring bean
+     * so it can be injected into services like BorrowService.
+     *
+     * @return the ConfigLoader Singleton instance
+     */
+    @Bean
+    public ConfigLoader configLoader() {
+        return ConfigLoader.getInstance();
     }
 
     /**
