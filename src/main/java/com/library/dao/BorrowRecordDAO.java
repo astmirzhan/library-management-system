@@ -21,6 +21,7 @@ import java.util.Optional;
 public class BorrowRecordDAO implements BaseDAO<BorrowRecord, Integer> {
 
     private static final Logger logger = LogManager.getLogger(BorrowRecordDAO.class);
+    private static final int DEFAULT_LIMIT = 100;
     private final DatabaseConnection dbConnection;
 
     public BorrowRecordDAO() {
@@ -101,7 +102,7 @@ public class BorrowRecordDAO implements BaseDAO<BorrowRecord, Integer> {
 
     @Override
     public List<BorrowRecord> findAll() throws SQLException {
-        return findAll(100, 0);
+        return findAll(DEFAULT_LIMIT, 0);
     }
 
     /**

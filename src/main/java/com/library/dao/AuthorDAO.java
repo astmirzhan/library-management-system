@@ -10,7 +10,6 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Data Access Object for the AUTHOR table.
@@ -28,21 +27,16 @@ public class AuthorDAO implements BaseDAO<Author, Integer> {
 
     @Override
     public Author save(Author author) throws SQLException {
-        String sql = "INSERT INTO author (author_uuid, first_name, last_name, nationality, bio) " +
-                "VALUES (?, ?, ?, ?, ?) RETURNING author_id";
-
-        if (author.getAuthorUuid() == null) {
-            author.setAuthorUuid(UUID.randomUUID().toString());
-        }
+        String sql = "INSERT INTO author (first_name, last_name, nationality, bio) " +
+                "VALUES (?, ?, ?, ?) RETURNING author_id";
 
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, author.getAuthorUuid());
-            stmt.setString(2, author.getFirstName());
-            stmt.setString(3, author.getLastName());
-            stmt.setString(4, author.getNationality());
-            stmt.setString(5, author.getBio());
+            stmt.setString(1, author.getFirstName());
+            stmt.setString(2, author.getLastName());
+            stmt.setString(3, author.getNationality());
+            stmt.setString(4, author.getBio());
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -171,7 +165,6 @@ public class AuthorDAO implements BaseDAO<Author, Integer> {
     private Author mapResultSet(ResultSet rs) throws SQLException {
         Author author = new Author();
         author.setAuthorId(rs.getInt("author_id"));
-        author.setAuthorUuid(rs.getString("author_uuid"));
         author.setFirstName(rs.getString("first_name"));
         author.setLastName(rs.getString("last_name"));
         author.setNationality(rs.getString("nationality"));

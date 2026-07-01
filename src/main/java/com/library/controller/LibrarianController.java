@@ -29,6 +29,7 @@ import java.util.List;
 public class LibrarianController {
 
     private static final Logger logger = LogManager.getLogger(LibrarianController.class);
+    private static final int PAGE_SIZE = 20;
 
     private final BookService bookService;
     private final BorrowService borrowService;
@@ -69,7 +70,7 @@ public class LibrarianController {
     public String books(@RequestParam(defaultValue = "1") int page,
                         Model model, HttpSession session) {
         try {
-            List<Book> books = bookService.getAllBooks(page, 20);
+            List<Book> books = bookService.getAllBooks(page, PAGE_SIZE);
             model.addAttribute("books", books);
             model.addAttribute("currentPage", page);
             model.addAttribute("user", session.getAttribute("currentUser"));
@@ -81,13 +82,104 @@ public class LibrarianController {
     }
 
     /**
+     * Shows the form to add a new book.
+     */
+    @GetMapping("/books/new")
+    public String addBookForm(Model model, HttpSession session) {
+        try {
+            model.addAttribute("authors", bookService.getAllAuthors());
+            model.addAttribute("genres", bookService.getAllGenres());
+            model.addAttribute("user", session.getAttribute("currentUser"));
+            return "librarian/book-form";
+        } catch (SQLException e) {
+            logger.error("Failed to load add-book form", e);
+            return "error";
+        }
+    }
+
+    /**
+     * Creates a new book with the requested number of copies.
+     */
+    @PostMapping("/books")
+    public String createBook(@RequestParam String title,
+                             @RequestParam String isbn,
+                             @RequestParam int publicationYear,
+                             @RequestParam(defaultValue = "1") int copies,
+                             @RequestParam(required = false) String description,
+                             @RequestParam(required = false) List<Integer> authorIds,
+                             @RequestParam(required = false) List<Integer> genreIds,
+                             RedirectAttributes redirectAttributes) {
+        try {
+            Book book = new Book();
+            book.setTitle(title);
+            book.setIsbn(isbn);
+            book.setPublicationYear(publicationYear);
+            book.setDescription(description);
+            bookService.createBook(book, authorIds, genreIds, copies);
+            redirectAttributes.addFlashAttribute("success", "Book added with " + copies + " copies");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/librarian/books/new";
+        } catch (SQLException e) {
+            logger.error("Failed to create book", e);
+            redirectAttributes.addFlashAttribute("error", "System error. Please try again.");
+            return "redirect:/librarian/books/new";
+        }
+        return "redirect:/librarian/books";
+    }
+
+    /**
+     * Adds more physical copies to an existing book.
+     */
+    @PostMapping("/books/{bookId}/copies")
+    public String addCopies(@PathVariable int bookId,
+                            @RequestParam(defaultValue = "1") int count,
+                            RedirectAttributes redirectAttributes) {
+        try {
+            bookService.addCopies(bookId, count);
+            redirectAttributes.addFlashAttribute("success", count + " copies added");
+        } catch (Exception e) {
+            logger.error("Failed to add copies to book {}", bookId, e);
+            redirectAttributes.addFlashAttribute("error", "Failed to add copies");
+        }
+        return "redirect:/librarian/books";
+    }
+
+    /**
+     * Shows all overdue borrow records (not returned, past due date).
+     */
+    @GetMapping("/overdue")
+    public String overdue(Model model, HttpSession session) {
+        try {
+            List<BorrowRecord> overdue = borrowService.getOverdueRecords();
+            model.addAttribute("overdue", overdue);
+            model.addAttribute("user", session.getAttribute("currentUser"));
+            return "librarian/overdue";
+        } catch (SQLException e) {
+            logger.error("Failed to load overdue list", e);
+            return "error";
+        }
+    }
+
+    /**
+     * Sends an overdue reminder for a borrow record (demo: logged + confirmation flash).
+     */
+    @PostMapping("/overdue/remind/{borrowId}")
+    public String sendReminder(@PathVariable int borrowId,
+                               RedirectAttributes redirectAttributes) {
+        logger.info("Overdue reminder sent for borrow record {}", borrowId);
+        redirectAttributes.addFlashAttribute("success", "Reminder sent for borrow #" + borrowId);
+        return "redirect:/librarian/overdue";
+    }
+
+    /**
      * Shows all borrow records for management.
      */
     @GetMapping("/borrows")
     public String borrows(@RequestParam(defaultValue = "1") int page,
                           Model model, HttpSession session) {
         try {
-            List<BorrowRecord> borrows = borrowService.getAllBorrows(page, 20);
+            List<BorrowRecord> borrows = borrowService.getAllBorrows(page, PAGE_SIZE);
             model.addAttribute("borrows", borrows);
             model.addAttribute("currentPage", page);
             model.addAttribute("user", session.getAttribute("currentUser"));

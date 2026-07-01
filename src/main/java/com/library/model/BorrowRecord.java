@@ -27,7 +27,6 @@ public class BorrowRecord {
     private LocalDate approvalDate;
 
     private User user;
-    private BookCopy bookCopy;
 
     public BorrowRecord() {
         this.fineAmount = BigDecimal.ZERO;
@@ -146,14 +145,6 @@ public class BorrowRecord {
 
     public void setUser(User user) {
         this.user = user;
-    }
-
-    public BookCopy getBookCopy() {
-        return bookCopy;
-    }
-
-    public void setBookCopy(BookCopy bookCopy) {
-        this.bookCopy = bookCopy;
     }
 
     public boolean isActive() {

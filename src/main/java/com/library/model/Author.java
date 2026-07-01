@@ -8,7 +8,6 @@ import java.util.Objects;
 public class Author {
 
     private int authorId;
-    private String authorUuid;
     private String firstName;
     private String lastName;
     private String nationality;
@@ -17,10 +16,9 @@ public class Author {
     public Author() {
     }
 
-    public Author(int authorId, String authorUuid, String firstName, String lastName,
+    public Author(int authorId, String firstName, String lastName,
                   String nationality, String bio) {
         this.authorId = authorId;
-        this.authorUuid = authorUuid;
         this.firstName = firstName;
         this.lastName = lastName;
         this.nationality = nationality;
@@ -33,14 +31,6 @@ public class Author {
 
     public void setAuthorId(int authorId) {
         this.authorId = authorId;
-    }
-
-    public String getAuthorUuid() {
-        return authorUuid;
-    }
-
-    public void setAuthorUuid(String authorUuid) {
-        this.authorUuid = authorUuid;
     }
 
     public String getFirstName() {

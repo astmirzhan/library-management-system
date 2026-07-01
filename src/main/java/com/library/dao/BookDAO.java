@@ -12,7 +12,6 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Data Access Object for the BOOK table.
@@ -22,6 +21,7 @@ import java.util.UUID;
 public class BookDAO implements BaseDAO<Book, Integer> {
 
     private static final Logger logger = LogManager.getLogger(BookDAO.class);
+    private static final int DEFAULT_LIMIT = 100;
     private final DatabaseConnection dbConnection;
     private final AuthorDAO authorDAO;
     private final GenreDAO genreDAO;
@@ -34,29 +34,25 @@ public class BookDAO implements BaseDAO<Book, Integer> {
 
     @Override
     public Book save(Book book) throws SQLException {
-        String sql = "INSERT INTO book (book_uuid, isbn, title, publication_year, " +
-                "total_copies, available_copies, publisher_id) " +
+        String sql = "INSERT INTO book (isbn, title, publication_year, " +
+                "total_copies, available_copies, publisher_id, description) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING book_id";
-
-        if (book.getBookUuid() == null) {
-            book.setBookUuid(UUID.randomUUID().toString());
-        }
 
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, book.getBookUuid());
-            stmt.setString(2, book.getIsbn());
-            stmt.setString(3, book.getTitle());
-            stmt.setInt(4, book.getPublicationYear());
-            stmt.setInt(5, book.getTotalCopies());
-            stmt.setInt(6, book.getAvailableCopies());
+            stmt.setString(1, book.getIsbn());
+            stmt.setString(2, book.getTitle());
+            stmt.setInt(3, book.getPublicationYear());
+            stmt.setInt(4, book.getTotalCopies());
+            stmt.setInt(5, book.getAvailableCopies());
 
             if (book.getPublisherId() != null) {
-                stmt.setInt(7, book.getPublisherId());
+                stmt.setInt(6, book.getPublisherId());
             } else {
-                stmt.setNull(7, Types.INTEGER);
+                stmt.setNull(6, Types.INTEGER);
             }
+            stmt.setString(7, book.getDescription());
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -98,7 +94,7 @@ public class BookDAO implements BaseDAO<Book, Integer> {
 
     @Override
     public List<Book> findAll() throws SQLException {
-        return findAll(100, 0);
+        return findAll(DEFAULT_LIMIT, 0);
     }
 
     /**
@@ -321,7 +317,7 @@ public class BookDAO implements BaseDAO<Book, Integer> {
     @Override
     public boolean update(Book book) throws SQLException {
         String sql = "UPDATE book SET isbn = ?, title = ?, publication_year = ?, " +
-                "total_copies = ?, publisher_id = ? WHERE book_id = ?";
+                "total_copies = ?, publisher_id = ?, description = ? WHERE book_id = ?";
 
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -336,8 +332,9 @@ public class BookDAO implements BaseDAO<Book, Integer> {
             } else {
                 stmt.setNull(5, Types.INTEGER);
             }
+            stmt.setString(6, book.getDescription());
 
-            stmt.setInt(6, book.getBookId());
+            stmt.setInt(7, book.getBookId());
 
             int rows = stmt.executeUpdate();
             logger.info("Book updated: id={}", book.getBookId());
@@ -457,10 +454,81 @@ public class BookDAO implements BaseDAO<Book, Integer> {
         return 0;
     }
 
+    /**
+     * Decrements available_copies by one (when a copy is borrowed/requested).
+     * Guarded so the count never goes below zero.
+     *
+     * @param bookId the book ID
+     * @return true if a row was updated
+     * @throws SQLException if database error occurs
+     */
+    public boolean decrementAvailableCopies(int bookId) throws SQLException {
+        String sql = "UPDATE book SET available_copies = available_copies - 1 " +
+                "WHERE book_id = ? AND available_copies > 0";
+
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, bookId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            logger.error("Failed to decrement available copies for book: {}", bookId, e);
+            throw e;
+        }
+    }
+
+    /**
+     * Increments available_copies by one (when a copy is returned).
+     * Guarded so the count never exceeds total_copies.
+     *
+     * @param bookId the book ID
+     * @return true if a row was updated
+     * @throws SQLException if database error occurs
+     */
+    public boolean incrementAvailableCopies(int bookId) throws SQLException {
+        String sql = "UPDATE book SET available_copies = available_copies + 1 " +
+                "WHERE book_id = ? AND available_copies < total_copies";
+
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, bookId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            logger.error("Failed to increment available copies for book: {}", bookId, e);
+            throw e;
+        }
+    }
+
+    /**
+     * Increases both total_copies and available_copies by the given amount
+     * (used when a librarian adds new physical copies of a book).
+     *
+     * @param bookId the book ID
+     * @param count  number of copies added
+     * @return true if a row was updated
+     * @throws SQLException if database error occurs
+     */
+    public boolean addCopies(int bookId, int count) throws SQLException {
+        String sql = "UPDATE book SET total_copies = total_copies + ?, " +
+                "available_copies = available_copies + ? WHERE book_id = ?";
+
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, count);
+            stmt.setInt(2, count);
+            stmt.setInt(3, bookId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            logger.error("Failed to add copies for book: {}", bookId, e);
+            throw e;
+        }
+    }
+
     private Book mapResultSet(ResultSet rs) throws SQLException {
         Book book = new Book();
         book.setBookId(rs.getInt("book_id"));
-        book.setBookUuid(rs.getString("book_uuid"));
         book.setIsbn(rs.getString("isbn"));
         book.setTitle(rs.getString("title"));
         book.setPublicationYear(rs.getInt("publication_year"));
@@ -472,6 +540,7 @@ public class BookDAO implements BaseDAO<Book, Integer> {
             book.setPublisherId(publisherId);
         }
 
+        book.setDescription(rs.getString("description"));
         return book;
     }
 }

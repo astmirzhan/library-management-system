@@ -17,6 +17,7 @@
             <a th:href="@{/librarian/dashboard}">📊 Dashboard</a>
             <a th:href="@{/librarian/books}" class="active">📖 Book inventory</a>
             <a th:href="@{/librarian/borrows}">📋 Borrowing records</a>
+            <a th:href="@{/librarian/overdue}">⏰ Overdue</a>
             <a th:href="@{/catalog}">🔍 View catalog</a>
         </nav>
         <div class="user-chip">
@@ -42,7 +43,8 @@
                 </div>
             </div>
             <div class="top-actions">
-                <a th:href="@{/catalog}" class="btn">View public catalog</a>
+                <a th:href="@{/librarian/books/new}" class="btn">+ Add new book</a>
+                <a th:href="@{/catalog}" class="btn ghost">View public catalog</a>
             </div>
         </header>
 
@@ -90,7 +92,15 @@
                         <span th:if="${book.availableCopies == 0}" class="status out">0</span>
                     </td>
                     <td>
-                        <a th:href="@{/catalog/{id}(id=${book.bookId})}" class="btn ghost small">Details</a>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <a th:href="@{/catalog/{id}(id=${book.bookId})}" class="btn ghost small">Details</a>
+                            <form method="post" th:action="@{/librarian/books/{id}/copies(id=${book.bookId})}"
+                                  style="display: flex; gap: 4px; align-items: center;">
+                                <input type="number" name="count" value="1" min="1"
+                                       style="width: 56px;" aria-label="Number of copies to add">
+                                <button type="submit" class="btn secondary small">+ Copies</button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 </tbody>

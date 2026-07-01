@@ -26,8 +26,7 @@ out/
 # NetBeans
 nbproject/private/
 build/
-n
-bbuild/
+nbbuild/
 dist/
 nbdist/
 

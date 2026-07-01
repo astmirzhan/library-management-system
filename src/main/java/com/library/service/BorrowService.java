@@ -1,6 +1,7 @@
 package com.library.service;
 
 import com.library.dao.BookCopyDAO;
+import com.library.dao.BookDAO;
 import com.library.dao.BorrowRecordDAO;
 import com.library.dao.UserDAO;
 import com.library.model.BookCopy;
@@ -32,14 +33,16 @@ public class BorrowService {
 
     private final BorrowRecordDAO borrowDAO;
     private final BookCopyDAO copyDAO;
+    private final BookDAO bookDAO;
     private final UserDAO userDAO;
     private final ConfigLoader config;
 
     @Autowired
-    public BorrowService(BorrowRecordDAO borrowDAO, BookCopyDAO copyDAO,
+    public BorrowService(BorrowRecordDAO borrowDAO, BookCopyDAO copyDAO, BookDAO bookDAO,
                          UserDAO userDAO, ConfigLoader config) {
         this.borrowDAO = borrowDAO;
         this.copyDAO = copyDAO;
+        this.bookDAO = bookDAO;
         this.userDAO = userDAO;
         this.config = config;
     }
@@ -89,6 +92,7 @@ public class BorrowService {
         record.setFinePaid(false);
 
         BorrowRecord saved = borrowDAO.save(record);
+        bookDAO.decrementAvailableCopies(bookId);
         logger.info("Borrow requested: user={}, book={}, copy={}", userId, bookId, copy.getCopyId());
         return saved;
     }
@@ -141,6 +145,11 @@ public class BorrowService {
 
         BigDecimal fine = calculateFine(record.getDueDate(), LocalDate.now());
         borrowDAO.returnBook(borrowId, fine);
+
+        Optional<BookCopy> copyOpt = copyDAO.findById(record.getCopyId());
+        if (copyOpt.isPresent()) {
+            bookDAO.incrementAvailableCopies(copyOpt.get().getBookId());
+        }
 
         record.setReturnDate(LocalDate.now());
         record.setStatus(BorrowRecord.Status.RETURNED);

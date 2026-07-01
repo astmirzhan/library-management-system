@@ -19,6 +19,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import javax.servlet.http.HttpSession;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Controller for admin operations: user management, statistics, reports.
@@ -28,6 +29,7 @@ import java.util.List;
 public class AdminController {
 
     private static final Logger logger = LogManager.getLogger(AdminController.class);
+    private static final int PAGE_SIZE = 20;
 
     private final UserService userService;
     private final BookService bookService;
@@ -72,7 +74,7 @@ public class AdminController {
     public String users(@RequestParam(defaultValue = "1") int page,
                         Model model, HttpSession session) {
         try {
-            List<User> users = userService.getAllUsers(page, 20);
+            List<User> users = userService.getAllUsers(page, PAGE_SIZE);
             model.addAttribute("users", users);
             model.addAttribute("currentPage", page);
             model.addAttribute("user", session.getAttribute("currentUser"));
@@ -87,6 +89,30 @@ public class AdminController {
      * Deletes a user.
      * Note: An admin cannot delete other admins.
      */
+    @PostMapping("/users/toggle/{userId}")
+    public String toggleActive(@PathVariable int userId,
+                               HttpSession session,
+                               RedirectAttributes redirectAttributes) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser.getUserId() == userId) {
+            redirectAttributes.addFlashAttribute("error", "You cannot block yourself");
+            return "redirect:/admin/users";
+        }
+        try {
+            Optional<User> opt = userService.findById(userId);
+            if (opt.isPresent()) {
+                boolean newState = !opt.get().isActive();
+                userService.setUserActive(userId, newState);
+                redirectAttributes.addFlashAttribute("success",
+                        newState ? "User activated" : "User blocked");
+            }
+        } catch (Exception e) {
+            logger.error("Failed to toggle user {}", userId, e);
+            redirectAttributes.addFlashAttribute("error", "Failed to update user status");
+        }
+        return "redirect:/admin/users";
+    }
+
     @PostMapping("/users/delete/{userId}")
     public String deleteUser(@PathVariable int userId,
                              HttpSession session,

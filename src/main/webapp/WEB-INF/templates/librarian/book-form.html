@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Add Book · Library</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css" th:href="@{/css/style.css}">
+</head>
+<body>
+<section id="appView">
+    <aside class="sidebar">
+        <div class="brand"><span class="brand-mark">⌁</span> Library</div>
+        <nav class="nav">
+            <a th:href="@{/librarian/dashboard}">📊 Dashboard</a>
+            <a th:href="@{/librarian/books}" class="active">📖 Book inventory</a>
+            <a th:href="@{/librarian/borrows}">📋 Borrowing records</a>
+            <a th:href="@{/librarian/overdue}">⏰ Overdue</a>
+            <a th:href="@{/catalog}">🔍 View catalog</a>
+        </nav>
+        <div class="user-chip">
+            <div class="user-row">
+                <div class="avatar"
+                     th:text="${#strings.toUpperCase(#strings.substring(user.username, 0, 2))}">L
+                </div>
+                <div class="user-meta">
+                    <strong th:text="${user.username}">User</strong>
+                    <small th:text="${user.role.name() + ' account'}">Librarian account</small>
+                </div>
+                <a th:href="@{/logout}" class="logout" title="Sign out">↪</a>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <div class="top-actions">
+                <div class="page-title">
+                    <h1>Add new book</h1>
+                    <p>Create a catalog entry and its physical copies.</p>
+                </div>
+            </div>
+            <div class="top-actions">
+                <a th:href="@{/librarian/books}" class="btn ghost small">← Back to inventory</a>
+            </div>
+        </header>
+
+        <div th:if="${error}" class="panel"
+             style="margin-bottom:20px; padding:14px 18px; background:#f7e2e0; color:var(--danger);"
+             th:text="${error}"></div>
+
+        <div class="panel" style="padding: 24px; max-width: 640px;">
+            <form method="post" th:action="@{/librarian/books}" style="display: grid; gap: 14px;">
+                <div>
+                    <label for="title"><strong>Title</strong></label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+                <div>
+                    <label for="isbn"><strong>ISBN</strong></label>
+                    <input type="text" id="isbn" name="isbn" required>
+                </div>
+                <div>
+                    <label for="publicationYear"><strong>Publication year</strong></label>
+                    <input type="number" id="publicationYear" name="publicationYear"
+                           min="1000" max="2100" required>
+                </div>
+                <div>
+                    <label for="copies"><strong>Number of copies</strong></label>
+                    <input type="number" id="copies" name="copies" min="1" value="1" required>
+                </div>
+                <div>
+                    <label for="description"><strong>Description</strong></label>
+                    <textarea id="description" name="description" rows="3"
+                              placeholder="Short description of the book…"></textarea>
+                </div>
+                <div>
+                    <label for="authorIds"><strong>Authors</strong> (Ctrl/Cmd to select multiple)</label>
+                    <select id="authorIds" name="authorIds" multiple size="4">
+                        <option th:each="a : ${authors}" th:value="${a.authorId}"
+                                th:text="${a.fullName}">Author</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="genreIds"><strong>Genres</strong> (Ctrl/Cmd to select multiple)</label>
+                    <select id="genreIds" name="genreIds" multiple size="4">
+                        <option th:each="g : ${genres}" th:value="${g.genreId}"
+                                th:text="${g.name}">Genre</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn" style="justify-self: start;">Create book</button>
+            </form>
+        </div>
+    </main>
+</section>
+</body>
+</html>

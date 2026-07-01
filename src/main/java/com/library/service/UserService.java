@@ -98,7 +98,7 @@ public class UserService {
         if (username == null || username.trim().length() < 3) {
             throw new IllegalArgumentException("Username must be at least 3 characters");
         }
-        if (email == null || !email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+        if (email == null || !email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
             throw new IllegalArgumentException("Invalid email format");
         }
         if (password == null || password.length() < 6) {
@@ -206,6 +206,28 @@ public class UserService {
      */
     public boolean deleteUser(int userId) throws SQLException {
         return userDAO.deleteById(userId);
+    }
+
+    /**
+     * Blocks or activates a user account.
+     *
+     * @param userId the user ID
+     * @param active true to activate, false to block
+     * @return true if updated successfully
+     * @throws SQLException if database error occurs
+     */
+    public boolean setUserActive(int userId, boolean active) throws SQLException {
+        Optional<User> opt = userDAO.findById(userId);
+        if (opt.isEmpty()) {
+            return false;
+        }
+        User user = opt.get();
+        user.setActive(active);
+        boolean updated = userDAO.update(user);
+        if (updated) {
+            logger.info("User {} {}", userId, active ? "activated" : "blocked");
+        }
+        return updated;
     }
 
     /**

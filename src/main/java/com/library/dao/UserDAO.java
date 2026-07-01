@@ -20,6 +20,7 @@ import java.util.UUID;
 public class UserDAO implements BaseDAO<User, Integer> {
 
     private static final Logger logger = LogManager.getLogger(UserDAO.class);
+    private static final int DEFAULT_LIMIT = 100;
     private final DatabaseConnection dbConnection;
 
     public UserDAO() {
@@ -37,8 +38,8 @@ public class UserDAO implements BaseDAO<User, Integer> {
     @Override
     public User save(User user) throws SQLException {
         String sql = "INSERT INTO \"user\" (user_uuid, username, email, password, " +
-                "role, registration_date, phone_number) VALUES (?, ?, ?, ?, ?::user_role, ?, ?) " +
-                "RETURNING user_id";
+                "role, registration_date, phone_number, active) " +
+                "VALUES (?, ?, ?, ?, ?::user_role, ?, ?, ?) RETURNING user_id";
 
         if (user.getUserUuid() == null) {
             user.setUserUuid(UUID.randomUUID().toString());
@@ -57,6 +58,7 @@ public class UserDAO implements BaseDAO<User, Integer> {
             stmt.setString(5, user.getRole().name());
             stmt.setDate(6, Date.valueOf(user.getRegistrationDate()));
             stmt.setString(7, user.getPhoneNumber());
+            stmt.setBoolean(8, user.isActive());
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -160,7 +162,7 @@ public class UserDAO implements BaseDAO<User, Integer> {
 
     @Override
     public List<User> findAll() throws SQLException {
-        return findAll(100, 0);
+        return findAll(DEFAULT_LIMIT, 0);
     }
 
     /**
@@ -201,7 +203,7 @@ public class UserDAO implements BaseDAO<User, Integer> {
     @Override
     public boolean update(User user) throws SQLException {
         String sql = "UPDATE \"user\" SET username = ?, email = ?, password = ?, " +
-                "role = ?::user_role, phone_number = ? WHERE user_id = ?";
+                "role = ?::user_role, phone_number = ?, active = ? WHERE user_id = ?";
 
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -211,7 +213,8 @@ public class UserDAO implements BaseDAO<User, Integer> {
             stmt.setString(3, user.getPasswordHash());
             stmt.setString(4, user.getRole().name());
             stmt.setString(5, user.getPhoneNumber());
-            stmt.setInt(6, user.getUserId());
+            stmt.setBoolean(6, user.isActive());
+            stmt.setInt(7, user.getUserId());
 
             int rowsUpdated = stmt.executeUpdate();
             logger.info("User updated: id={}, rows={}", user.getUserId(), rowsUpdated);
@@ -292,6 +295,7 @@ public class UserDAO implements BaseDAO<User, Integer> {
         }
 
         user.setPhoneNumber(rs.getString("phone_number"));
+        user.setActive(rs.getBoolean("active"));
         return user;
     }
 }

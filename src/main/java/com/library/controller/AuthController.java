@@ -53,6 +53,10 @@ public class AuthController {
             Optional<User> userOpt = userService.authenticate(email, password);
             if (userOpt.isPresent()) {
                 User user = userOpt.get();
+                if (!user.isActive()) {
+                    model.addAttribute("error", "Your account is blocked. Contact an administrator.");
+                    return "login";
+                }
                 HttpSession session = request.getSession(true);
                 session.setAttribute("currentUser", user);
                 logger.info("User logged in: {}", user.getEmail());

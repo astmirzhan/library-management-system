@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
 <section id="appView">
@@ -16,8 +16,7 @@
         <nav class="nav">
             <a th:href="@{/catalog}" class="active">📖 Book catalog</a>
             <a th:href="@{/borrowings}">📋 My borrowed books</a>
-            <a th:href="@{/catalog}">⭐ My reviews</a>
-            <a th:href="@{/catalog}">👤 My profile</a>
+            <a th:href="@{/profile}">👤 My profile</a>
         </nav>
         <div class="user-chip">
             <div class="user-row">

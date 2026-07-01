@@ -71,6 +71,7 @@
                     <th>Username</th>
                     <th>Email</th>
                     <th>Role</th>
+                    <th>Status</th>
                     <th>Registered</th>
                     <th>Phone</th>
                     <th>Action</th>
@@ -82,16 +83,28 @@
                     <td th:text="${u.username}">name</td>
                     <td th:text="${u.email}">email</td>
                     <td><span class="status" th:text="${u.role.name()}">ROLE</span></td>
+                    <td>
+                        <span th:if="${u.active}" class="status">Active</span>
+                        <span th:unless="${u.active}" class="status out">Blocked</span>
+                    </td>
                     <td th:text="${u.registrationDate}">date</td>
                     <td th:text="${u.phoneNumber != null ? u.phoneNumber : '—'}">—</td>
                     <td>
                         <span th:if="${u.userId == user.userId}" style="color: var(--muted);">You</span>
-                        <form th:unless="${u.userId == user.userId}" method="post"
-                              th:action="@{/admin/users/delete/{id}(id=${u.userId})}"
-                              style="display:inline">
-                            <button type="submit" class="btn ghost small"
-                                    style="color: var(--danger);">Delete</button>
-                        </form>
+                        <div th:unless="${u.userId == user.userId}" style="display:flex; gap:6px;">
+                            <form method="post"
+                                  th:action="@{/admin/users/toggle/{id}(id=${u.userId})}"
+                                  style="display:inline">
+                                <button type="submit" class="btn ghost small"
+                                        th:text="${u.active} ? 'Block' : 'Activate'">Block</button>
+                            </form>
+                            <form method="post"
+                                  th:action="@{/admin/users/delete/{id}(id=${u.userId})}"
+                                  style="display:inline">
+                                <button type="submit" class="btn ghost small"
+                                        style="color: var(--danger);">Delete</button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 </tbody>

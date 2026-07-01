@@ -16,8 +16,7 @@
         <nav class="nav">
             <a th:href="@{/catalog}" class="active">📖 Book catalog</a>
             <a th:href="@{/borrowings}">📋 My borrowed books</a>
-            <a th:href="@{/catalog}">⭐ My reviews</a>
-            <a th:href="@{/catalog}">👤 My profile</a>
+            <a th:href="@{/profile}">👤 My profile</a>
         </nav>
         <div class="user-chip">
             <div class="user-row">
@@ -82,6 +81,10 @@
                     <p style="margin: 0 0 10px;"><strong>Average rating:</strong>
                         <span th:text="${#numbers.formatDecimal(averageRating, 1, 1)}">0.0</span> ⭐
                     </p>
+                    <p th:if="${book.description != null and !book.description.isEmpty()}"
+                       style="margin: 10px 0 0;"><strong>Description:</strong>
+                        <span th:text="${book.description}">description</span>
+                    </p>
                 </div>
 
                 <div style="margin-top: 16px;">
@@ -113,6 +116,25 @@
                 <p th:text="|${#lists.size(reviews)} review${#lists.size(reviews) == 1 ? '' : 's'}|">reviews</p>
             </div>
         </div>
+
+        <!-- Write a review (only borrowers can submit; rule enforced server-side) -->
+        <form th:if="${user != null}" method="post" th:action="@{/reviews}" class="panel"
+              style="padding: 18px; margin-bottom: 16px; display: grid; gap: 10px;">
+            <input type="hidden" name="bookId" th:value="${book.bookId}">
+            <div>
+                <label for="rating"><strong>Your rating</strong></label>
+                <select name="rating" id="rating" required>
+                    <option value="5">★★★★★ (5)</option>
+                    <option value="4">★★★★ (4)</option>
+                    <option value="3">★★★ (3)</option>
+                    <option value="2">★★ (2)</option>
+                    <option value="1">★ (1)</option>
+                </select>
+            </div>
+            <textarea name="comment" rows="3" placeholder="Share your thoughts about this book…"
+                      required></textarea>
+            <button type="submit" class="btn" style="justify-self: start;">Submit review</button>
+        </form>
 
         <div th:if="${#lists.isEmpty(reviews)}" class="panel empty">
             No reviews yet. Be the first to review!

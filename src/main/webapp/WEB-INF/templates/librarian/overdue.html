@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Borrowing Records · Library</title>
+    <title>Overdue · Library</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -16,8 +16,8 @@
         <nav class="nav">
             <a th:href="@{/librarian/dashboard}">📊 Dashboard</a>
             <a th:href="@{/librarian/books}">📖 Book inventory</a>
-            <a th:href="@{/librarian/borrows}" class="active">📋 Borrowing records</a>
-            <a th:href="@{/librarian/overdue}">⏰ Overdue</a>
+            <a th:href="@{/librarian/borrows}">📋 Borrowing records</a>
+            <a th:href="@{/librarian/overdue}" class="active">⏰ Overdue</a>
             <a th:href="@{/catalog}">🔍 View catalog</a>
         </nav>
         <div class="user-chip">
@@ -38,8 +38,8 @@
         <header class="topbar">
             <div class="top-actions">
                 <div class="page-title">
-                    <h1>Borrowing records</h1>
-                    <p>All loans across the library.</p>
+                    <h1>Overdue borrowings</h1>
+                    <p>Loans past their due date — send reminders.</p>
                 </div>
             </div>
         </header>
@@ -47,22 +47,12 @@
         <div th:if="${success}" class="panel"
              style="margin-bottom:20px; padding:14px 18px; background:var(--brand-2); color:var(--brand); border-color:var(--brand);"
              th:text="${success}"></div>
-        <div th:if="${error}" class="panel"
-             style="margin-bottom:20px; padding:14px 18px; background:#f7e2e0; color:var(--danger);"
-             th:text="${error}"></div>
 
-        <div class="section-head">
-            <div>
-                <h2>Loan history</h2>
-                <p th:text="|${#lists.size(borrows)} record${#lists.size(borrows) == 1 ? '' : 's'} on this page|">records</p>
-            </div>
+        <div th:if="${#lists.isEmpty(overdue)}" class="panel empty">
+            No overdue borrowings. 🎉
         </div>
 
-        <div th:if="${#lists.isEmpty(borrows)}" class="panel empty">
-            No borrowing records to display.
-        </div>
-
-        <div th:if="${not #lists.isEmpty(borrows)}" class="panel table-wrap">
+        <div th:if="${not #lists.isEmpty(overdue)}" class="panel table-wrap">
             <table>
                 <thead>
                 <tr>
@@ -70,45 +60,27 @@
                     <th>Reader ID</th>
                     <th>Copy ID</th>
                     <th>Borrowed</th>
-                    <th>Due</th>
-                    <th>Returned</th>
-                    <th>Status</th>
-                    <th>Fine</th>
+                    <th>Due date</th>
                     <th>Action</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="record : ${borrows}">
+                <tr th:each="record : ${overdue}">
                     <td>#<span th:text="${record.borrowId}">1</span></td>
                     <td th:text="${record.userId}">1</td>
                     <td th:text="${record.copyId}">1</td>
                     <td th:text="${record.borrowDate}">date</td>
-                    <td th:text="${record.dueDate}">date</td>
-                    <td th:text="${record.returnDate != null ? record.returnDate : '—'}">—</td>
-                    <td><span class="status" th:text="${record.status.name()}">STATUS</span></td>
-                    <td th:text="${record.fineAmount != null ? '$' + record.fineAmount : '$0'}">$0</td>
+                    <td><span class="status out" th:text="${record.dueDate}">date</span></td>
                     <td>
-                        <form th:if="${record.status.name() == 'REQUESTED'}" method="post"
-                              th:action="@{/librarian/borrows/approve/{id}(id=${record.borrowId})}"
+                        <form method="post"
+                              th:action="@{/librarian/overdue/remind/{id}(id=${record.borrowId})}"
                               style="display:inline">
-                            <button type="submit" class="btn secondary small">✓ Approve</button>
+                            <button type="submit" class="btn secondary small">✉ Send reminder</button>
                         </form>
-                        <span th:unless="${record.status.name() == 'REQUESTED'}" style="color: var(--muted);">—</span>
                     </td>
                 </tr>
                 </tbody>
             </table>
-        </div>
-
-        <!-- Pagination (prev/next; controller does not expose total count) -->
-        <div style="margin-top: 32px; display: flex; gap: 8px; justify-content: center; align-items: center;">
-            <a th:if="${currentPage > 1}"
-               th:href="@{/librarian/borrows(page=${currentPage - 1})}"
-               class="btn ghost small">← Prev</a>
-            <span class="btn small" th:text="${currentPage}">1</span>
-            <a th:if="${#lists.size(borrows) == 20}"
-               th:href="@{/librarian/borrows(page=${currentPage + 1})}"
-               class="btn ghost small">Next →</a>
         </div>
     </main>
 </section>

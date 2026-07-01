@@ -21,6 +21,7 @@ public class User {
     private Role role;
     private LocalDate registrationDate;
     private String phoneNumber;
+    private boolean active = true;
 
     public User() {
     }
@@ -100,6 +101,14 @@ public class User {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     @Override

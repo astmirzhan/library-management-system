@@ -1,10 +1,12 @@
 package com.library.service;
 
 import com.library.dao.AuthorDAO;
+import com.library.dao.BookCopyDAO;
 import com.library.dao.BookDAO;
 import com.library.dao.GenreDAO;
 import com.library.model.Author;
 import com.library.model.Book;
+import com.library.model.BookCopy;
 import com.library.model.Genre;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,12 +28,70 @@ public class BookService {
     private final BookDAO bookDAO;
     private final AuthorDAO authorDAO;
     private final GenreDAO genreDAO;
+    private final BookCopyDAO bookCopyDAO;
 
     @Autowired
-    public BookService(BookDAO bookDAO, AuthorDAO authorDAO, GenreDAO genreDAO) {
+    public BookService(BookDAO bookDAO, AuthorDAO authorDAO, GenreDAO genreDAO,
+                       BookCopyDAO bookCopyDAO) {
         this.bookDAO = bookDAO;
         this.authorDAO = authorDAO;
         this.genreDAO = genreDAO;
+        this.bookCopyDAO = bookCopyDAO;
+    }
+
+    /**
+     * Creates a book with the given number of physical copies (librarian flow).
+     * Sets total/available copies to the requested count and inserts copy rows.
+     *
+     * @param book      the book to create
+     * @param authorIds author IDs to link (may be null)
+     * @param genreIds  genre IDs to link (may be null)
+     * @param copies    number of physical copies to create
+     * @return the saved book
+     * @throws SQLException if database error occurs
+     */
+    public Book createBook(Book book, List<Integer> authorIds, List<Integer> genreIds, int copies)
+            throws SQLException {
+        if (copies < 1) {
+            throw new IllegalArgumentException("Number of copies must be at least 1");
+        }
+        book.setTotalCopies(copies);
+        book.setAvailableCopies(copies);
+
+        Book saved = addBook(book, authorIds, genreIds);   // validate + save + link
+
+        for (int i = 1; i <= copies; i++) {
+            BookCopy copy = new BookCopy();
+            copy.setBookId(saved.getBookId());
+            copy.setCopyNumber(i);
+            copy.setCondition(BookCopy.Condition.GOOD);
+            bookCopyDAO.save(copy);
+        }
+        logger.info("Book created with {} copies: {}", copies, saved.getTitle());
+        return saved;
+    }
+
+    /**
+     * Adds more physical copies to an existing book and bumps its copy counters.
+     *
+     * @param bookId the book ID
+     * @param count  number of copies to add
+     * @throws SQLException if database error occurs
+     */
+    public void addCopies(int bookId, int count) throws SQLException {
+        if (count < 1) {
+            throw new IllegalArgumentException("Number of copies must be at least 1");
+        }
+        int start = bookCopyDAO.findByBookId(bookId).size();
+        for (int i = 1; i <= count; i++) {
+            BookCopy copy = new BookCopy();
+            copy.setBookId(bookId);
+            copy.setCopyNumber(start + i);
+            copy.setCondition(BookCopy.Condition.GOOD);
+            bookCopyDAO.save(copy);
+        }
+        bookDAO.addCopies(bookId, count);
+        logger.info("Added {} copies to book {}", count, bookId);
     }
 
     /**

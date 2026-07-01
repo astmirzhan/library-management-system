@@ -11,13 +11,13 @@ import java.util.Objects;
 public class Book {
 
     private int bookId;
-    private String bookUuid;
     private String isbn;
     private String title;
     private int publicationYear;
     private int totalCopies;
     private int availableCopies;
     private Integer publisherId;
+    private String description;
 
     // Связанные сущности (заполняются через JOIN в DAO)
     private Publisher publisher;
@@ -27,11 +27,10 @@ public class Book {
     public Book() {
     }
 
-    public Book(int bookId, String bookUuid, String isbn, String title,
+    public Book(int bookId, String isbn, String title,
                 int publicationYear, int totalCopies, int availableCopies,
                 Integer publisherId) {
         this.bookId = bookId;
-        this.bookUuid = bookUuid;
         this.isbn = isbn;
         this.title = title;
         this.publicationYear = publicationYear;
@@ -46,14 +45,6 @@ public class Book {
 
     public void setBookId(int bookId) {
         this.bookId = bookId;
-    }
-
-    public String getBookUuid() {
-        return bookUuid;
-    }
-
-    public void setBookUuid(String bookUuid) {
-        this.bookUuid = bookUuid;
     }
 
     public String getIsbn() {
@@ -102,6 +93,14 @@ public class Book {
 
     public void setPublisherId(Integer publisherId) {
         this.publisherId = publisherId;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public Publisher getPublisher() {

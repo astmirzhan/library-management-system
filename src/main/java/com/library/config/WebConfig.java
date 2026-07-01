@@ -6,6 +6,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.CacheControl;
 import com.library.util.ConfigLoader;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.springframework.web.servlet.LocaleResolver;
@@ -154,8 +155,13 @@ public class WebConfig implements WebMvcConfigurer {
      */
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/css/**").addResourceLocations("/static/css/");
-        registry.addResourceHandler("/js/**").addResourceLocations("/static/js/");
-        registry.addResourceHandler("/images/**").addResourceLocations("/static/images/");
+        // no-cache: браузер обязан ревалидировать статику перед использованием кэша,
+        // поэтому обновлённый style.css подхватывается без ручного hard-refresh.
+        registry.addResourceHandler("/css/**").addResourceLocations("/static/css/")
+                .setCacheControl(CacheControl.noCache());
+        registry.addResourceHandler("/js/**").addResourceLocations("/static/js/")
+                .setCacheControl(CacheControl.noCache());
+        registry.addResourceHandler("/images/**").addResourceLocations("/static/images/")
+                .setCacheControl(CacheControl.noCache());
     }
 }
